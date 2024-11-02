@@ -163,10 +163,10 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             }
             if (IsRoundNumber == 9)
             {
-                foreach (var player_l in Utilities.GetPlayers().Where(player => player is { IsValid: true }))
-                {
-                    player_l.PlayerPawn.Value!.VelocityModifier = 0.0f;
-                }
+                // foreach (var player_l in Utilities.GetPlayers().Where(player => player is { IsValid: true }))
+                // {
+                //     player_l.PlayerPawn.Value!.VelocityModifier = 0.0f;
+                // }
             }
             IsRound = false;
             EndRound = false;
@@ -459,13 +459,13 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             }
             if (IsRoundNumber == 9)
             {
-                if (IsRound || Config.AllowSpeedRound)
-                {
-                    CCSPlayerPawn? pawn = player.PlayerPawn.Value;
-                    Server.PrintToConsole($"{player.PlayerPawn.Value!.Speed}");
-                    pawn.VelocityModifier = 2.0f;
-                    player.PlayerPawn.Value!.Health = 200;
-                }
+                // if (IsRound || Config.AllowSpeedRound)
+                // {
+                //     CCSPlayerPawn? pawn = player.PlayerPawn.Value;
+                //     Server.PrintToConsole($"{player.PlayerPawn.Value!.Speed}");
+                //     pawn.VelocityModifier = 2.0f;
+                //     player.PlayerPawn.Value!.Health = 200;
+                // }
             }
 
         }
@@ -479,8 +479,6 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
         CCSPlayerController player = @event.Userid;
         CCSPlayerController attacker = @event.Attacker;
 
-
-
         if (player.Connected != PlayerConnectedState.PlayerConnected || !player.PlayerPawn.IsValid || !@event.Userid.IsValid)
             return HookResult.Continue;
         if (IsRoundNumber == 8)
@@ -491,7 +489,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 player.PrintToChat($" {Config.Prefix} You canno't hit player with other GUN!");
             }
         }
-        @event.Userid.PlayerPawn.Value!.VelocityModifier = 1;
+        // @event.Userid.PlayerPawn.Value!.VelocityModifier = 1;
         return HookResult.Continue;
     }
 
