@@ -107,9 +107,8 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
     [ConsoleCommand("css_startround", "Start specific round")]
     public void startround(CCSPlayerController? player, CommandInfo info)
     {
-        if(AdminManager.PlayerHasPermissions(player, "@css/root"))
+        if (AdminManager.PlayerHasPermissions(player, "@css/root"))
         {
-
             int round_id = Convert.ToInt32(info.ArgByIndex(1));
             if (round_id == null)
             {
@@ -118,7 +117,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             EndRound = false;
             IsRound = true;
             IsRoundNumber = round_id;
-            player.PrintToChat("YOU START A ROUND!");
+            player.PrintToChat("YOU STARTED A ROUND!");
         }
     }
     [GameEventHandler]
@@ -126,9 +125,10 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
     {
         if (EndRound)
         {
-            WriteColor($"SpecialRound - [*SUCCESS*] I turning off the special round.", ConsoleColor.Green);
-            if(IsRoundNumber == 1)
+            WriteColor($"SpecialRound - [*SUCCESS*] I stopped the special round.", ConsoleColor.Green);
+            if (IsRoundNumber == 1)
             {
+                change_cvar("sv_buy_status_override", "-1");
                 change_cvar("mp_buytime", $"{Config.mp_buytime}");
             }
             if (IsRoundNumber == 2)
@@ -142,14 +142,17 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             }
             if (IsRoundNumber == 4)
             {
+                change_cvar("sv_buy_status_override", "-1");
                 change_cvar("mp_buytime", $"{Config.mp_buytime}");
             }
             if (IsRoundNumber == 5)
             {
+                change_cvar("sv_buy_status_override", "-1");
                 change_cvar("mp_buytime", $"{Config.mp_buytime}");
             }
             if (IsRoundNumber == 6)
             {
+                change_cvar("sv_buy_status_override", "-1");
                 change_cvar("mp_buytime", $"{Config.mp_buytime}");
             }
             if (IsRoundNumber == 7)
@@ -158,15 +161,19 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             }
             if (IsRoundNumber == 8)
             {
+                change_cvar("sv_buy_status_override", "-1");
                 change_cvar("mp_buytime", $"{Config.mp_buytime}");
                 timer_decoy?.Kill();
             }
             if (IsRoundNumber == 9)
             {
-                // foreach (var player_l in Utilities.GetPlayers().Where(player => player is { IsValid: true }))
-                // {
-                //     player_l.PlayerPawn.Value!.VelocityModifier = 0.0f;
-                // }
+                foreach (var player_l in Utilities.GetPlayers().Where(player => player is { IsValid: true }))
+                {
+                    if (player_l.PlayerPawn.Value is not null)
+                    {
+                        player_l.PlayerPawn.Value.VelocityModifier = 0.0f;
+                    }
+                }
             }
             IsRound = false;
             EndRound = false;
@@ -186,7 +193,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             return HookResult.Continue;
         }
         Random rnd = new Random();
-        int random = rnd.Next(0, 60);
+        int random = rnd.Next(0, 100);
         if (random == 1 || random == 2)
         {
             if (Config.AllowKnifeRound)
@@ -254,7 +261,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 IsRound = true;
                 EndRound = true;
                 IsRoundNumber = 7;
-                NameOfRound = "Slaping round";
+                NameOfRound = "Slapping round";
             }
         }
         if (random == 49 || random == 50)
@@ -312,11 +319,11 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                     {
                         if (weapon is { IsValid: true, Value.IsValid: true })
                         {
-
-                            if (weapon.Value.DesignerName.Contains("bayonet") || weapon.Value.DesignerName.Contains("knife"))
+                            if (weapon.Value.DesignerName.Contains("bayonet") || weapon.Value.DesignerName.Contains("knife") || weapon.Value.DesignerName.Contains("c4"))
                             {
                                 continue;
                             }
+                            change_cvar("sv_buy_status_override", "3");
                             change_cvar("mp_buytime", "0");
                             weapon.Value.Remove();
                         }
@@ -341,7 +348,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                     }
                 }
             }
-            if (IsRoundNumber == 3 )
+            if (IsRoundNumber == 3)
             {
                 WriteColor($"SpecialRound - [*ROUND START*] Starting special round {NameOfRound}.", ConsoleColor.Green);
 
@@ -366,6 +373,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                     {
                         if (weapon is { IsValid: true, Value.IsValid: true })
                         {
+                            change_cvar("sv_buy_status_override", "3");
                             change_cvar("mp_buytime", "0");
                             weapon.Value.Remove();
                         }
@@ -384,15 +392,20 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 if (IsRound || Config.AllowP90Round)
                 {
                     if (!is_alive(player))
+                    {
                         return HookResult.Continue;
+                    }
+
                     foreach (var weapon in player.PlayerPawn.Value.WeaponServices!.MyWeapons)
                     {
                         if (weapon is { IsValid: true, Value.IsValid: true })
                         {
+                            change_cvar("sv_buy_status_override", "3");
                             change_cvar("mp_buytime", "0");
                             weapon.Value.Remove();
                         }
                     }
+
                     player.GiveNamedItem("weapon_p90");
                     if (!EndRound)
                     {
@@ -412,13 +425,14 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                     {
                         if (weapon is { IsValid: true, Value.IsValid: true })
                         {
-                            if (weapon.Value.DesignerName.Contains("bayonet") || weapon.Value.DesignerName.Contains("knife"))
+                            if (weapon.Value.DesignerName.Contains("bayonet") || weapon.Value.DesignerName.Contains("knife") || weapon.Value.DesignerName.Contains("c4"))
                             {
                                 continue;
                             }
                             weapon.Value.Remove();
                         }
                     }
+                    change_cvar("sv_buy_status_override", "3");
                     change_cvar("mp_buytime", "0");
                     player.GiveNamedItem("weapon_awp");
                     if (!EndRound)
@@ -431,10 +445,10 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             {
                 if (IsRound || Config.AllowSlapRound)
                 {
-                        Random rnd = new Random();
-                        int random = rnd.Next(3, 10);
-                        float random_time = random;
-                        timer_up = AddTimer(random + 0.1f, () => { goup(player); }, TimerFlags.REPEAT);
+                    Random rnd = new Random();
+                    int random = rnd.Next(3, 10);
+                    float random_time = random;
+                    timer_up = AddTimer(random + 0.1f, () => { goup(player); }, TimerFlags.REPEAT);
                 }
             }
             if (IsRoundNumber == 8)
@@ -445,27 +459,41 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                     {
                         if (weapon is { IsValid: true, Value.IsValid: true })
                         {
-                            if (weapon.Value.DesignerName.Contains("bayonet") || weapon.Value.DesignerName.Contains("knife"))
-                            { continue; }
+                            if (weapon.Value.DesignerName.Contains("bayonet") || weapon.Value.DesignerName.Contains("knife") || weapon.Value.DesignerName.Contains("c4"))
+                            {
+                                continue;
+                            }
                             weapon.Value.Remove();
                         }
                     }
+                    change_cvar("sv_buy_status_override", "3");
+                    change_cvar("mp_buytime", "0");
                     player.PlayerPawn.Value!.Health = 1;
                     player.GiveNamedItem("weapon_decoy");
-                    Server.ExecuteCommand("mp_buytime 0");
                     timer_decoy = AddTimer(2.0f, () => { DecoyCheck(player); }, TimerFlags.REPEAT);
                     Server.PrintToConsole($"{player.PlayerName}");
                 }
             }
             if (IsRoundNumber == 9)
             {
-                // if (IsRound || Config.AllowSpeedRound)
-                // {
-                //     CCSPlayerPawn? pawn = player.PlayerPawn.Value;
-                //     Server.PrintToConsole($"{player.PlayerPawn.Value!.Speed}");
-                //     pawn.VelocityModifier = 2.0f;
-                //     player.PlayerPawn.Value!.Health = 200;
-                // }
+                if (IsRound || Config.AllowSpeedRound)
+                {
+                    foreach (var player_l in Utilities.GetPlayers().Where(player => player is { IsValid: true }))
+                    {
+                        if (player_l.PlayerPawn.Value is not null)
+                        {
+                            player_l.PlayerPawn.Value.VelocityModifier = 2.0f;
+                            player_l.PlayerPawn.Value.Health = 200;
+                        }
+                    }
+                    // CCSPlayerPawn? pawn = player.PlayerPawn.Value;
+                    // Server.PrintToConsole($"{player.PlayerPawn.Value!.Speed}");
+                    // if (pawn is not null)
+                    // {
+                    //     pawn.VelocityModifier = 2.0f;
+                    //     player.PlayerPawn.Value!.Health = 200;
+                    // }
+                }
             }
 
         }
@@ -503,7 +531,6 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
 
         weaponservices.ActiveWeapon.Value.Remove();
         player.GiveNamedItem(currentWeapon);
-
 
         return HookResult.Continue;
     }

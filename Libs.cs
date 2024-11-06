@@ -87,15 +87,15 @@ namespace SpecialRounds
         }
         static public void goup(CCSPlayerController? player)
         {
-            if(player == null || !player.IsValid)
+            if (player == null || !player.IsValid)
             {
                 //WriteColor($"Special Rounds - [*goup*] is not valid or is disconnected.", ConsoleColor.Red);
                 return;
             }
-            if(!player.PawnIsAlive)
+            if (!player.PawnIsAlive)
             {
-                WriteColor($"Special Rounds - [*{player.PlayerName}*] is death.", ConsoleColor.Red);
-                return;  
+                WriteColor($"Special Rounds - [*{player.PlayerName}*] is dead.", ConsoleColor.Red);
+                return;
             }
             var pawn = player.Pawn.Value;
 
@@ -111,7 +111,7 @@ namespace SpecialRounds
         }
         static public bool is_alive(CCSPlayerController? player)
         {
-            if (!player.PawnIsAlive)
+            if (player is null || !player.PawnIsAlive)
             {
                 return false;
             }
@@ -120,14 +120,14 @@ namespace SpecialRounds
 
         static public bool change_cvar(string cvar, string value)
         {
-                var find_cvar = ConVar.Find($"{cvar}");
-                if (find_cvar == null)
-                {
-                    WriteColor($"SpecialRound - [*ERROR*] Canno't set {cvar} to {value}.", ConsoleColor.Red);
-                    return false;
-                }
-                Server.ExecuteCommand($"{cvar} {value}");
-                return true;
+            var find_cvar = ConVar.Find($"{cvar}");
+            if (find_cvar == null)
+            {
+                WriteColor($"SpecialRound - [*ERROR*] Cannot set {cvar} to {value}.", ConsoleColor.Red);
+                return false;
+            }
+            Server.ExecuteCommand($"{cvar} {value}");
+            return true;
         }
     }
 }
