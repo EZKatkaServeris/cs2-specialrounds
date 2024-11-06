@@ -85,7 +85,7 @@ namespace SpecialRounds
                 timer_decoy?.Kill();
             }
         }
-        static public void goup(CCSPlayerController? player)
+        public void goup(CCSPlayerController? player)
         {
             if (player == null || !player.IsValid)
             {
@@ -97,17 +97,29 @@ namespace SpecialRounds
                 WriteColor($"Special Rounds - [*{player.PlayerName}*] is dead.", ConsoleColor.Red);
                 return;
             }
-            var pawn = player.Pawn.Value;
+            if (IsRoundNumber == 7)
+            {
+                if (IsRound == true)
+                {
+                    var pawn = player.Pawn.Value;
+                    var random = new Random();
+                    var vel = new Vector(pawn.AbsVelocity.X, pawn.AbsVelocity.Y, pawn.AbsVelocity.Z);
 
+                    vel.X += ((random.Next(180) + 50) * ((random.Next(2) == 1) ? -1 : 1));
+                    vel.Y += ((random.Next(180) + 50) * ((random.Next(2) == 1) ? -1 : 1));
+                    vel.Z += random.Next(200) + 100;
 
-            var random = new Random();
-            var vel = new Vector(pawn.AbsVelocity.X, pawn.AbsVelocity.Y, pawn.AbsVelocity.Z);
-
-            vel.X += ((random.Next(180) + 50) * ((random.Next(2) == 1) ? -1 : 1));
-            vel.Y += ((random.Next(180) + 50) * ((random.Next(2) == 1) ? -1 : 1));
-            vel.Z += random.Next(200) + 100;
-
-            pawn.Teleport(pawn.AbsOrigin!, pawn.AbsRotation!, vel);
+                    pawn.Teleport(pawn.AbsOrigin!, pawn.AbsRotation!, vel);
+                }
+                else
+                {
+                    timer_up?.Kill();
+                }
+            }
+            else
+            {
+                timer_up?.Kill();
+            }
         }
         static public bool is_alive(CCSPlayerController? player)
         {

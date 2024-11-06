@@ -193,8 +193,9 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             return HookResult.Continue;
         }
         Random rnd = new Random();
-        int random = rnd.Next(0, 100);
-        if (random == 1 || random == 2)
+        int random = rnd.Next(0, Config.Chance);
+
+        if (random >= 0 && random < 2)
         {
             if (Config.AllowKnifeRound)
             {
@@ -204,7 +205,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Knife only";
             }
         }
-        if (random == 6 || random == 7)
+        if (random == 2)
         {
             if (Config.AllowBHOPRound)
             {
@@ -214,7 +215,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Auto BHopping";
             }
         }
-        if (random == 14 || random == 15)
+        if (random >= 3 && random < 5)
         {
             if (Config.AllowGravityRound)
             {
@@ -224,7 +225,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Gravity round";
             }
         }
-        if (random == 21 || random == 22)
+        if (random >= 5 && random < 6)
         {
             if (Config.AllowAWPRound)
             {
@@ -234,7 +235,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Only AWP";
             }
         }
-        if (random == 29 || random == 30)
+        if (random == 6)
         {
             if (Config.AllowP90Round)
             {
@@ -244,7 +245,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Only P90";
             }
         }
-        if (random == 36 || random == 37)
+        if (random >= 7 && random < 10)
         {
             if (Config.AllowANORound)
             {
@@ -254,9 +255,9 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Only AWP + NOSCOPE";
             }
         }
-        if (random == 42 || random == 43)
+        if (random >= 10 && random < 12)
         {
-            if (Config.AllowANORound)
+            if (Config.AllowSlapRound)
             {
                 IsRound = true;
                 EndRound = true;
@@ -264,7 +265,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Slapping round";
             }
         }
-        if (random == 49 || random == 50)
+        if (random >= 12 && random < 15)
         {
             if (Config.AllowDecoyRound)
             {
@@ -274,7 +275,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Decoy round";
             }
         }
-        if (random == 58 || random == 59)
+        if (random >= 15 && random < 16)
         {
             if (Config.AllowSpeedRound)
             {
