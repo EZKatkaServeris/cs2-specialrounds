@@ -165,16 +165,6 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 change_cvar("mp_buytime", $"{Config.mp_buytime}");
                 timer_decoy?.Kill();
             }
-            if (IsRoundNumber == 9)
-            {
-                foreach (var player_l in Utilities.GetPlayers().Where(player => player is { IsValid: true }))
-                {
-                    if (player_l.PlayerPawn.Value is not null)
-                    {
-                        player_l.PlayerPawn.Value.VelocityModifier = 0.0f;
-                    }
-                }
-            }
             IsRound = false;
             EndRound = false;
             isset = false;
@@ -195,7 +185,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
         Random rnd = new Random();
         int random = rnd.Next(0, Config.Chance);
 
-        if (random >= 0 && random < 2)
+        if (random >= 0 && random < 3)
         {
             if (Config.AllowKnifeRound)
             {
@@ -205,7 +195,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Knife only";
             }
         }
-        if (random == 2)
+        if (random == 3)
         {
             if (Config.AllowBHOPRound)
             {
@@ -215,7 +205,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Auto BHopping";
             }
         }
-        if (random >= 3 && random < 5)
+        if (random >= 4 && random < 6)
         {
             if (Config.AllowGravityRound)
             {
@@ -225,7 +215,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Gravity round";
             }
         }
-        if (random >= 5 && random < 6)
+        if (random == 6)
         {
             if (Config.AllowAWPRound)
             {
@@ -235,7 +225,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Only AWP";
             }
         }
-        if (random == 6)
+        if (random == 7)
         {
             if (Config.AllowP90Round)
             {
@@ -245,7 +235,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Only P90";
             }
         }
-        if (random >= 7 && random < 10)
+        if (random >= 8 && random < 11)
         {
             if (Config.AllowANORound)
             {
@@ -255,7 +245,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Only AWP + NOSCOPE";
             }
         }
-        if (random >= 10 && random < 12)
+        if (random >= 11 && random < 13)
         {
             if (Config.AllowSlapRound)
             {
@@ -265,7 +255,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 NameOfRound = "Slapping round";
             }
         }
-        if (random >= 12 && random < 15)
+        if (random >= 13 && random < 16)
         {
             if (Config.AllowDecoyRound)
             {
@@ -273,16 +263,6 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 EndRound = true;
                 IsRoundNumber = 8;
                 NameOfRound = "Decoy round";
-            }
-        }
-        if (random >= 15 && random < 16)
-        {
-            if (Config.AllowSpeedRound)
-            {
-                IsRound = true;
-                EndRound = true;
-                IsRoundNumber = 9;
-                NameOfRound = "Speed round";
             }
         }
         if (IsRound == true)
@@ -475,28 +455,6 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                     Server.PrintToConsole($"{player.PlayerName}");
                 }
             }
-            if (IsRoundNumber == 9)
-            {
-                if (IsRound || Config.AllowSpeedRound)
-                {
-                    foreach (var player_l in Utilities.GetPlayers().Where(player => player is { IsValid: true }))
-                    {
-                        if (player_l.PlayerPawn.Value is not null)
-                        {
-                            player_l.PlayerPawn.Value.VelocityModifier = 2.0f;
-                            player_l.PlayerPawn.Value.Health = 200;
-                        }
-                    }
-                    // CCSPlayerPawn? pawn = player.PlayerPawn.Value;
-                    // Server.PrintToConsole($"{player.PlayerPawn.Value!.Speed}");
-                    // if (pawn is not null)
-                    // {
-                    //     pawn.VelocityModifier = 2.0f;
-                    //     player.PlayerPawn.Value!.Health = 200;
-                    // }
-                }
-            }
-
         }
         isset = false;
         return HookResult.Continue;
@@ -518,7 +476,6 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 player.PrintToChat($" {Config.Prefix} You canno't hit player with other GUN!");
             }
         }
-        // @event.Userid.PlayerPawn.Value!.VelocityModifier = 1;
         return HookResult.Continue;
     }
 
