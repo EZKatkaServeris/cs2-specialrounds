@@ -170,21 +170,21 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             isset = false;
             IsRoundNumber = 0;
             NameOfRound = "";
-
         }
+
         if (IsRound)
         {
-            WriteColor($"SpecialRound - [*WARNING*] I cannot start new special round, its now.", ConsoleColor.Yellow);
+            WriteColor($"SpecialRound - [*WARNING*] Cannot start new special round when it's already in progress.", ConsoleColor.Yellow);
             return HookResult.Continue;
         }
         if (Round < 0)
         {
-            WriteColor("SpecialRound - [*WARNING*] I cannot start new special round, its round < 5.", ConsoleColor.Yellow);
+            WriteColor("SpecialRound - [*WARNING*] Cannot start new special round, it's round < 5.", ConsoleColor.Yellow);
             return HookResult.Continue;
         }
+
         Random rnd = new Random();
         int random = rnd.Next(0, Config.Chance);
-
         if (random >= 0 && random < 3)
         {
             if (Config.AllowKnifeRound)
@@ -273,6 +273,50 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
 
         return HookResult.Continue;
     }
+
+    [GameEventHandler]
+    public HookResult OnRoundPostStart(EventRoundPoststart @event, GameEventInfo info)
+    {
+        List<int> NoBuyRounds = new() { 1, 4, 5, 6, 8 };
+        if (IsRound && IsRoundNumber > 0 && NoBuyRounds.Contains(IsRoundNumber))
+        {
+            if (IsRoundNumber == 1 && Config.AllowKnifeRound)
+                change_cvar("sv_buy_status_override", "3");
+            if (IsRoundNumber == 4 && Config.AllowAWPRound)
+                change_cvar("sv_buy_status_override", "3");
+            if (IsRoundNumber == 5 && Config.AllowP90Round)
+                change_cvar("sv_buy_status_override", "3");
+            if (IsRoundNumber == 6 && Config.AllowANORound)
+                change_cvar("sv_buy_status_override", "3");
+            if (IsRoundNumber == 8 && Config.AllowDecoyRound)
+                change_cvar("sv_buy_status_override", "3");
+        }
+        return HookResult.Continue;
+    }
+
+    [GameEventHandler]
+    public HookResult OnItemPurchase(EventItemPurchase @event, GameEventInfo info)
+    {
+        List<bool> NoBuyRounds = new() { false, Config.AllowKnifeRound, false, false, Config.AllowAWPRound, Config.AllowP90Round, Config.AllowANORound, false, Config.AllowDecoyRound };
+
+        if (IsRound && IsRoundNumber > 0 && NoBuyRounds[IsRoundNumber])
+        {
+            string weaponName = @event.Weapon;
+            CCSPlayerController user = @event.Userid;
+            if (user.IsValid && user.PawnIsAlive && user.PlayerPawn.Value is not null)
+            {
+                foreach (var weapon in user.PlayerPawn.Value.WeaponServices!.MyWeapons)
+                {
+                    if (weapon is { IsValid: true, Value.IsValid: true } && weapon.Value.DesignerName.Equals(weaponName))
+                    {
+                        weapon.Value.Remove();
+                    }
+                }
+            }
+        }
+        return HookResult.Continue;
+    }
+
     [GameEventHandler]
     public HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
     {
@@ -304,7 +348,6 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                             {
                                 continue;
                             }
-                            change_cvar("sv_buy_status_override", "3");
                             change_cvar("mp_buytime", "0");
                             weapon.Value.Remove();
                         }
@@ -354,7 +397,6 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                     {
                         if (weapon is { IsValid: true, Value.IsValid: true })
                         {
-                            change_cvar("sv_buy_status_override", "3");
                             change_cvar("mp_buytime", "0");
                             weapon.Value.Remove();
                         }
@@ -381,7 +423,6 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                     {
                         if (weapon is { IsValid: true, Value.IsValid: true })
                         {
-                            change_cvar("sv_buy_status_override", "3");
                             change_cvar("mp_buytime", "0");
                             weapon.Value.Remove();
                         }
@@ -413,7 +454,6 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                             weapon.Value.Remove();
                         }
                     }
-                    change_cvar("sv_buy_status_override", "3");
                     change_cvar("mp_buytime", "0");
                     player.GiveNamedItem("weapon_awp");
                     if (!EndRound)
@@ -447,7 +487,6 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                             weapon.Value.Remove();
                         }
                     }
-                    change_cvar("sv_buy_status_override", "3");
                     change_cvar("mp_buytime", "0");
                     player.PlayerPawn.Value!.Health = 1;
                     player.GiveNamedItem("weapon_decoy");
