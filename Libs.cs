@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
@@ -14,6 +12,7 @@ namespace SpecialRounds
         {
             return Utilities.FindAllEntitiesByDesignerName<CCSGameRulesProxy>("cs_gamerules").First().GameRules!;
         }
+
         static void WriteColor(string message, ConsoleColor color)
         {
             var pieces = Regex.Split(message, @"(\[[^\]]*\])");
@@ -34,6 +33,7 @@ namespace SpecialRounds
 
             Console.WriteLine();
         }
+
         static public int get_hp(CCSPlayerController? player)
         {
             if (player == null || !player.PawnIsAlive)
@@ -42,6 +42,7 @@ namespace SpecialRounds
             }
             return player.PlayerPawn.Value.Health;
         }
+
         private bool CheckIsHaveWeapon(string weapon_name, CCSPlayerController? pc)
         {
             if (pc == null || !pc.IsValid)
@@ -60,10 +61,12 @@ namespace SpecialRounds
             }
             return false;
         }
+
         public void DecoyCheck(CCSPlayerController? player)
         {
-            if (!player!.PawnIsAlive || !player.IsValid)
+            if (player is null || !player.PawnIsAlive || !player.IsValid)
                 return;
+
             var client = player.Index;
             var pawn = player.PlayerPawn;
             if (IsRoundNumber == 8)
@@ -77,17 +80,17 @@ namespace SpecialRounds
                 }
                 else
                 {
-                    timer_decoy?.Kill();
+                    TimerDecoy?.Kill();
                 }
             }
             else
             {
-                timer_decoy?.Kill();
+                TimerDecoy?.Kill();
             }
         }
-        public void goup(CCSPlayerController? player)
+        public void goup(CCSPlayerController? player, uint[] excluded)
         {
-            if (player == null || !player.IsValid)
+            if (player == null || !player.IsValid || player.PlayerPawn.Value is null)
             {
                 //WriteColor($"Special Rounds - [*goup*] is not valid or is disconnected.", ConsoleColor.Red);
                 return;
@@ -99,7 +102,7 @@ namespace SpecialRounds
             }
             if (IsRoundNumber == 7)
             {
-                if (IsRound == true)
+                if (IsRound == true && !ExclusionZone.Contains(player.PlayerPawn.Value.Index))
                 {
                     var pawn = player.Pawn.Value;
                     var random = new Random();
@@ -113,12 +116,12 @@ namespace SpecialRounds
                 }
                 else
                 {
-                    timer_up?.Kill();
+                    TimerSlap?.Kill();
                 }
             }
             else
             {
-                timer_up?.Kill();
+                TimerSlap?.Kill();
             }
         }
         static public bool is_alive(CCSPlayerController? player)
@@ -140,6 +143,18 @@ namespace SpecialRounds
             }
             Server.ExecuteCommand($"{cvar} {value}");
             return true;
+        }
+
+        static public bool RemoveWeapon(string name)
+        {
+            string[] WeaponsToKeep = { "weapon_bayonet", "weapon_knife", "weapon_c4" };
+            return WeaponsToKeep.Contains(name);
+        }
+
+        static public bool IsWeaponRound(int RoundNumber)
+        {
+            List<bool> NoBuyRounds = new() { false, true, false, false, true, true, true, false, true };
+            return NoBuyRounds[RoundNumber];
         }
     }
 }

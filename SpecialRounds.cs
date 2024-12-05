@@ -4,14 +4,12 @@ using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Utils;
-using CounterStrikeSharp.API.Modules.Menu;
 using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Modules.Timers;
-using System.ComponentModel;
 
 namespace SpecialRounds;
-[MinimumApiVersion(120)]
 
+[MinimumApiVersion(120)]
 public static class GetUnixTime
 {
     public static int GetUnixEpoch(this DateTime dateTime)
@@ -29,18 +27,23 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
     public override string ModuleDescription => "Simple Special rounds.";
     public override string ModuleVersion => "V. 1.0.6";
     private static readonly int?[] IsVIP = new int?[65];
-    public CounterStrikeSharp.API.Modules.Timers.Timer? timer_up;
-    public CounterStrikeSharp.API.Modules.Timers.Timer? timer_decoy;
-
-
+    public CounterStrikeSharp.API.Modules.Timers.Timer? TimerSlap;
+    public CounterStrikeSharp.API.Modules.Timers.Timer? TimerDecoy;
 
     public ConfigSpecials Config { get; set; }
     public int Round;
     public bool EndRound;
     public bool IsRound;
+    /*
+    * 1 - Knife
+    * 2 - BHop
+    * 3 - Gravity
+    * 4 - AWP
+    */
     public int IsRoundNumber;
     public string NameOfRound = "";
     public bool isset = false;
+    public uint[] ExclusionZone = Array.Empty<uint>();
 
     public void OnConfigParsed(ConfigSpecials config)
     {
@@ -57,8 +60,8 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             NameOfRound = "";
             IsRoundNumber = 0;
             Round = 0;
-
         });
+
         RegisterListener<Listeners.OnTick>(() =>
         {
             for (int i = 1; i < Server.MaxPlayers; i++)
@@ -102,8 +105,8 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             return;
         if (buttons == PlayerButtons.Zoom)
             return;
-
     }
+
     [ConsoleCommand("css_startround", "Start specific round")]
     public void startround(CCSPlayerController? player, CommandInfo info)
     {
@@ -120,6 +123,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             player.PrintToChat("YOU STARTED A ROUND!");
         }
     }
+
     [GameEventHandler]
     public HookResult OnRoundEnd(EventRoundEnd @event, GameEventInfo info)
     {
@@ -157,13 +161,14 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             }
             if (IsRoundNumber == 7)
             {
-                timer_up?.Kill();
+                TimerSlap?.Kill();
+                Array.Clear(ExclusionZone);
             }
             if (IsRoundNumber == 8)
             {
                 change_cvar("sv_buy_status_override", "-1");
                 change_cvar("mp_buytime", $"{Config.mp_buytime}");
-                timer_decoy?.Kill();
+                TimerDecoy?.Kill();
             }
             IsRound = false;
             EndRound = false;
@@ -183,7 +188,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
             return HookResult.Continue;
         }
 
-        Random rnd = new Random();
+        Random rnd = new();
         int random = rnd.Next(0, Config.Chance);
         if (random >= 0 && random < 3)
         {
@@ -232,7 +237,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                 IsRound = true;
                 EndRound = true;
                 IsRoundNumber = 5;
-                NameOfRound = "Only P90";
+                NameOfRound = "Only Deagle";
             }
         }
         if (random >= 8 && random < 11)
@@ -277,8 +282,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
     [GameEventHandler]
     public HookResult OnRoundPostStart(EventRoundPoststart @event, GameEventInfo info)
     {
-        List<int> NoBuyRounds = new() { 1, 4, 5, 6, 8 };
-        if (IsRound && IsRoundNumber > 0 && NoBuyRounds.Contains(IsRoundNumber))
+        if (IsRound && IsRoundNumber > 0 && IsWeaponRound(IsRoundNumber))
         {
             if (IsRoundNumber == 1 && Config.AllowKnifeRound)
                 change_cvar("sv_buy_status_override", "3");
@@ -297,9 +301,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
     [GameEventHandler]
     public HookResult OnItemPurchase(EventItemPurchase @event, GameEventInfo info)
     {
-        List<bool> NoBuyRounds = new() { false, Config.AllowKnifeRound, false, false, Config.AllowAWPRound, Config.AllowP90Round, Config.AllowANORound, false, Config.AllowDecoyRound };
-
-        if (IsRound && IsRoundNumber > 0 && NoBuyRounds[IsRoundNumber])
+        if (IsRound && IsRoundNumber > 0 && IsWeaponRound(IsRoundNumber))
         {
             string weaponName = @event.Weapon;
             CCSPlayerController user = @event.Userid;
@@ -338,13 +340,13 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
 
                 if (IsRound || Config.AllowKnifeRound)
                 {
-                    if (!is_alive(player))
+                    if (!is_alive(player) || player.PlayerPawn.Value is null)
                         return HookResult.Continue;
                     foreach (var weapon in player.PlayerPawn.Value.WeaponServices!.MyWeapons)
                     {
                         if (weapon is { IsValid: true, Value.IsValid: true })
                         {
-                            if (weapon.Value.DesignerName.Contains("bayonet") || weapon.Value.DesignerName.Contains("knife") || weapon.Value.DesignerName.Contains("c4"))
+                            if (RemoveWeapon(weapon.Value.DesignerName))
                             {
                                 continue;
                             }
@@ -391,12 +393,16 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
 
                 if (IsRound || Config.AllowAWPRound)
                 {
-                    if (!is_alive(player))
+                    if (!is_alive(player) || player.PlayerPawn.Value is null)
                         return HookResult.Continue;
                     foreach (var weapon in player.PlayerPawn.Value.WeaponServices!.MyWeapons)
                     {
                         if (weapon is { IsValid: true, Value.IsValid: true })
                         {
+                            if (RemoveWeapon(weapon.Value.DesignerName))
+                            {
+                                continue;
+                            }
                             change_cvar("mp_buytime", "0");
                             weapon.Value.Remove();
                         }
@@ -414,7 +420,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
 
                 if (IsRound || Config.AllowP90Round)
                 {
-                    if (!is_alive(player))
+                    if (!is_alive(player) || player.PlayerPawn.Value is null)
                     {
                         return HookResult.Continue;
                     }
@@ -423,12 +429,16 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                     {
                         if (weapon is { IsValid: true, Value.IsValid: true })
                         {
-                            change_cvar("mp_buytime", "0");
+                            if (RemoveWeapon(weapon.Value.DesignerName))
+                            {
+                                continue;
+                            }
                             weapon.Value.Remove();
                         }
                     }
 
-                    player.GiveNamedItem("weapon_p90");
+                    change_cvar("mp_buytime", "0");
+                    player.GiveNamedItem("weapon_deagle");
                     if (!EndRound)
                     {
                         EndRound = true;
@@ -441,13 +451,13 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
 
                 if (IsRound || Config.AllowANORound)
                 {
-                    if (!is_alive(player))
+                    if (!is_alive(player) || player.PlayerPawn.Value is null)
                         return HookResult.Continue;
                     foreach (var weapon in player.PlayerPawn.Value.WeaponServices!.MyWeapons)
                     {
                         if (weapon is { IsValid: true, Value.IsValid: true })
                         {
-                            if (weapon.Value.DesignerName.Contains("bayonet") || weapon.Value.DesignerName.Contains("knife") || weapon.Value.DesignerName.Contains("c4"))
+                            if (RemoveWeapon(weapon.Value.DesignerName))
                             {
                                 continue;
                             }
@@ -469,7 +479,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                     Random rnd = new Random();
                     int random = rnd.Next(3, 10);
                     float random_time = random;
-                    timer_up = AddTimer(random + 0.1f, () => { goup(player); }, TimerFlags.REPEAT);
+                    TimerSlap = AddTimer(random + 0.1f, () => { goup(player, ExclusionZone); }, TimerFlags.REPEAT);
                 }
             }
             if (IsRoundNumber == 8)
@@ -480,7 +490,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                     {
                         if (weapon is { IsValid: true, Value.IsValid: true })
                         {
-                            if (weapon.Value.DesignerName.Contains("bayonet") || weapon.Value.DesignerName.Contains("knife") || weapon.Value.DesignerName.Contains("c4"))
+                            if (RemoveWeapon(weapon.Value.DesignerName))
                             {
                                 continue;
                             }
@@ -490,7 +500,7 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
                     change_cvar("mp_buytime", "0");
                     player.PlayerPawn.Value!.Health = 1;
                     player.GiveNamedItem("weapon_decoy");
-                    timer_decoy = AddTimer(2.0f, () => { DecoyCheck(player); }, TimerFlags.REPEAT);
+                    TimerDecoy = AddTimer(2.0f, () => { DecoyCheck(player); }, TimerFlags.REPEAT);
                     Server.PrintToConsole($"{player.PlayerName}");
                 }
             }
@@ -498,8 +508,8 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
         isset = false;
         return HookResult.Continue;
     }
-    [GameEventHandler(HookMode.Post)]
 
+    [GameEventHandler(HookMode.Post)]
     public HookResult OnPlayerHurt(EventPlayerHurt @event, GameEventInfo info)
     {
         CCSPlayerController player = @event.Userid;
@@ -529,6 +539,28 @@ public partial class SpecialRounds : BasePlugin, IPluginConfig<ConfigSpecials>
         weaponservices.ActiveWeapon.Value.Remove();
         player.GiveNamedItem(currentWeapon);
 
+        return HookResult.Continue;
+    }
+
+    [GameEventHandler]
+    public HookResult OnBombsiteEnter(EventEnterBombzone @event, GameEventInfo info)
+    {
+        if (@event.Userid.PlayerPawn.Value?.Index is not null)
+        {
+            var player = @event.Userid.PlayerPawn.Value;
+            ExclusionZone = ExclusionZone.Append(player.Index).ToArray();
+        }
+        return HookResult.Continue;
+    }
+
+    [GameEventHandler]
+    public HookResult OnBombsiteLeave(EventExitBombzone @event, GameEventInfo info)
+    {
+        if (@event.Userid.PlayerPawn.Value?.Index is not null)
+        {
+            var player = @event.Userid.PlayerPawn.Value;
+            ExclusionZone = ExclusionZone.Where(id => id != player.Index).ToArray();
+        }
         return HookResult.Continue;
     }
 }
